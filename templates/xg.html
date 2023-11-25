@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>题目页面</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+        nav {
+            background-color: #4caf50;
+            overflow: hidden;
+        }
+        nav a {
+            float: left;
+            display: block;
+            color: #fff;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+        nav a:hover {
+            background-color: #ddd;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            box-sizing: border-box;
+            margin-top: 25px;
+        }
+        .question {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .options {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin-bottom: 16px;
+            color: #555;
+            font-size: 16px; /* Increased font size */
+        }
+        input[type="radio"] {
+            margin-right: 20px; /* Increased spacing between radio button and option text */
+            transform: scale(1.5); /* Increased size of radio button */
+        }
+        button {
+            padding: 15px;
+            margin-right: 10px;
+            cursor: pointer;
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px; /* Increased font size */
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #submit-btn {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 18px; /* Adjust font size as needed */
+            padding: 15px 20px; /* Adjust padding as needed */
+        }
+        .correct-answer {
+            color: #007bff; /* 蓝色 */
+        }
+
+        .incorrect-answer {
+            color: #ff0000; /* 红色 */
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>在线测验</h1>
+</header>
+
+<nav>
+    <a href="index.html">首页</a>
+    <a href="xg.html">习概刷题</a>
+    <a href="#">毛概刷题</a>
+    <a href="#">马原刷题</a>
+    <a href="#">近代史刷题</a>
+</nav>
+
+<div class="container">
+    <!-- 添加结果显示区域
+    <div id="result"></div> -->
+
+    <div class="question">
+        <h2>问题标题</h2>
+    </div>
+
+    <div class="options" id="singleChoice">
+        <label><input type="radio" name="option" value="A"> A. 选项 A</label>
+        <label><input type="radio" name="option" value="B"> B. 选项 B</label>
+        <label><input type="radio" name="option" value="C"> C. 选项 C</label>
+        <label><input type="radio" name="option" value="D"> D. 选项 D</label>
+    </div>
+
+    <div class="options" id="multipleChoice">
+        <label><input type="checkbox" name="option" value="A"> A. 选项 A</label>
+        <label><input type="checkbox" name="option" value="B"> B. 选项 B</label>
+        <label><input type="checkbox" name="option" value="C"> C. 选项 C</label>
+        <label><input type="checkbox" name="option" value="D"> D. 选项 D</label>
+    </div>
+
+    <div class="options" id="trueOrFalseQuestions">
+        <label><input type="radio" name="option" value="是">是</label>
+        <label><input type="radio" name="option" value="否">否</label>
+    </div>
+
+    <button id="prev-btn" onclick="prevQuestion()">上一题</button>
+    <button id="next-btn" onclick="nextQuestion()">下一题</button>
+</div>
+
+<!-- 添加提交按钮 -->
+<button id="submit-btn" onclick="confirmSubmit()">提交</button>
+
+<script>
+    // var questions = [
+    //     { question: "问题1", options: ["A1", "B", "C", "D"], answer: "A", selectedOption: null },
+    //     { question: "问题2", options: ["A2", "B", "C", "D"], answer: "B", selectedOption: null },
+    //     // 添加更多题目...
+    // ];
+
+    document.getElementById('singleChoice').style.display = 'block';
+    document.getElementById('multipleChoice').style.display = 'none';
+    document.getElementById('trueOrFalseQuestions').style.display = 'none';
+
+    var questions = {{questions | safe}};
+
+    var currentQuestionIndex = 0;
+
+    function showQuestion() {
+        var currentQuestion = questions[currentQuestionIndex];
+        // 题目
+        document.querySelector('.question h2').textContent = currentQuestion.question;
+        // 判断题目类型
+        if (!currentQuestion.options) {
+            document.getElementById('singleChoice').style.display = 'none';
+            document.getElementById('multipleChoice').style.display = 'none';
+            document.getElementById('trueOrFalseQuestions').style.display = 'block';
+
+            var optionsHTML = '';
+            for (var i = 0; i < 2; i++) {
+                if (currentQuestion.selectedOption) {
+                    var isChecked = currentQuestion.selectedOption.includes(['是', '否'][i]) ? 'checked' : '';
+                } else {
+                    var isChecked = ''
+                }
+                optionsHTML += '<label><input type="radio" name="option" value="' + ['是', '否'][i] + '"' + isChecked + '> ' + ['是', '否'][i] + '</label>';
+            }
+            document.getElementById('trueOrFalseQuestions').innerHTML = optionsHTML;
+        } else {
+            if (currentQuestion.answer.length <= 2) {
+                document.getElementById('singleChoice').style.display = 'block';
+                document.getElementById('multipleChoice').style.display = 'none';
+                document.getElementById('trueOrFalseQuestions').style.display = 'none';
+            } else if (currentQuestion.answer.length > 2) {
+                document.getElementById('singleChoice').style.display = 'none';
+                document.getElementById('multipleChoice').style.display = 'block';
+                document.getElementById('trueOrFalseQuestions').style.display = 'none';
+            }
+
+            var optionsHTML = '';
+            for (var i = 0; i < currentQuestion.options.length; i++) {
+                // 判断当前选项是否在已选选项当中
+                if (currentQuestion.selectedOption) {
+                    var isChecked = currentQuestion.selectedOption.includes(String.fromCharCode(65 + i)) ? 'checked' : '';
+                } else {
+                    var isChecked = ''
+                }
+                if (currentQuestion.answer.length <= 2) {
+                    optionsHTML += '<label><input type="radio" name="option" value="' + String.fromCharCode(65 + i) + '"' + isChecked + '> ' + currentQuestion.options[i] + '</label>';
+                } else if (currentQuestion.answer.length > 2) {
+                    optionsHTML += '<label><input type="checkbox" name="option" value="' + String.fromCharCode(65 + i) + '"' + isChecked + '> ' + currentQuestion.options[i] + '</label>';
+                }
+            }
+            if (currentQuestion.answer.length <= 2) {
+                document.getElementById('singleChoice').innerHTML = optionsHTML;
+            } else if (currentQuestion.answer.length > 2) {
+                document.getElementById('multipleChoice').innerHTML = optionsHTML;  
+            }
+        }
+    }
+
+    function prevQuestion() {
+        saveSelectedOption();
+        if (currentQuestionIndex - 1 > 0) {
+            currentQuestionIndex--;
+        }
+        showQuestion();
+    }
+
+    function nextQuestion() {
+        saveSelectedOption();
+        if (currentQuestionIndex + 1 < questions.length) {
+            currentQuestionIndex++;
+        }
+        showQuestion();
+    }
+
+    function saveSelectedOption() {
+        var currentQuestion = questions[currentQuestionIndex];
+        if (!currentQuestion.options) {
+            var optionId = "trueOrFalseQuestions";
+        } else {
+            if (currentQuestion.answer.length <= 2) {
+                var optionId = "singleChoice";
+            } else if (currentQuestion.answer.length > 2) {
+                var optionId = "multipleChoice";
+            }
+        }
+        // 查找已经选择的选项并保存
+        var selectedOption = Array.from(document.querySelectorAll('input[name="option"]:checked'));
+        var currentSelectedOption = new Array();
+        for (var i = 0; i < selectedOption.length; i++) {
+            if (selectedOption[i].parentElement.parentElement.id === optionId) {
+                currentSelectedOption.push(selectedOption[i].value)
+            } else {
+                continue
+            }
+        }
+        questions[currentQuestionIndex].selectedOption = currentSelectedOption
+    }
+
+    showQuestion();
+
+    function showSelectedQuestion() {
+        showQuestion()
+        var currentQuestion = questions[currentQuestionIndex];
+        var options = document.querySelectorAll('input[name="option"]');
+
+        // 遍历每个选项
+        options.forEach(function(option, index) {
+            var isCorrect = currentQuestion.answer.includes(option.value);
+
+            // 标记正确和错误的选项颜色
+            if (option.checked) {
+                if (isCorrect) {
+                    option.parentElement.classList.add('correct-answer');
+                } else {
+                    option.parentElement.classList.add('incorrect-answer');
+                }
+            }
+
+            // 标记正确答案的颜色
+            if (isCorrect) {
+                option.parentElement.classList.add('correct-answer');
+            }
+        });
+
+        // 禁用所有选项
+        options.forEach(function(option) {
+            option.disabled = true;
+        });
+    }
+
+    function showPrevQuestion() {
+        if (currentQuestionIndex - 1 > 0) {
+            currentQuestionIndex--;
+        }
+        showSelectedQuestion();
+    }
+
+    function showNextQuestion() {
+        if (currentQuestionIndex + 1 < questions.length) {
+            currentQuestionIndex++;
+        }
+        showSelectedQuestion();
+    }
+
+    function confirmSubmit() {
+        var isConfirmed = confirm("确定提交吗？");
+
+        if (isConfirmed) {
+            submitAnswers();
+        }
+    }
+
+    function submitAnswers() {
+        saveSelectedOption();
+
+        document.getElementById('prev-btn').onclick = showPrevQuestion;
+        document.getElementById('next-btn').onclick = showNextQuestion;
+
+        showSelectedQuestion()
+    }
+</script>
+
+</body>
+</html>
+
